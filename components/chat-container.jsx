@@ -1,7 +1,7 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChatMessages } from './chat-messages';
 import { MessageInput } from './message-input';
@@ -10,10 +10,12 @@ import { lastAssistantMessageIsCompleteWithToolCalls } from 'ai';
 export function ChatContainer() {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const messageInputRef = useRef(null);
     const { messages, sendMessage, stop } = useChat({
         sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
         onFinish: () => {
             setIsLoading(false);
+            messageInputRef.current?.focus();
         }
     });
 
@@ -24,6 +26,17 @@ export function ChatContainer() {
             sendMessage({ text: input });
             setInput('');
         }
+    };
+
+    const handleTranscription = (transcript) => {
+        setInput(transcript);
+    };
+
+    const handleLogoGenerate = async (businessName, businessType, businessDescription) => {
+        setIsLoading(true);
+        await sendMessage({
+            text: `Please generate a logo for my business: ${businessName}, which is a ${businessType}. ${businessDescription}`
+        });
     };
 
     return (
@@ -48,7 +61,7 @@ export function ChatContainer() {
                                 transition: { duration: 0.2, ease: "easeInOut" }
                             }}
                         >
-                            ¿Qué quieres crear?
+                            What do you want to create?
                         </motion.p>
                         <motion.div
                             className="w-full"
@@ -59,11 +72,13 @@ export function ChatContainer() {
                             }}
                         >
                             <MessageInput
+                                ref={messageInputRef}
                                 input={input}
                                 setInput={setInput}
                                 handleSubmit={handleSubmit}
                                 isLoading={isLoading}
                                 stop={stop}
+                                handleTranscription={handleTranscription}
                             />
                         </motion.div>
                     </motion.div>
@@ -78,7 +93,12 @@ export function ChatContainer() {
                             transition: { duration: 0.4, ease: "easeOut" }
                         }}
                     >
-                        <ChatMessages messages={messages} isLoading={isLoading} />
+                        <ChatMessages
+                            messages={messages}
+                            isLoading={isLoading}
+                            handleTranscription={handleTranscription}
+                            handleLogoGenerate={handleLogoGenerate}
+                        />
                         <motion.div
                             initial={{ y: 100, opacity: 0 }}
                             animate={{
@@ -88,11 +108,13 @@ export function ChatContainer() {
                             }}
                         >
                             <MessageInput
+                                ref={messageInputRef}
                                 input={input}
                                 setInput={setInput}
                                 handleSubmit={handleSubmit}
                                 isLoading={isLoading}
                                 stop={stop}
+                                handleTranscription={handleTranscription}
                             />
                         </motion.div>
                     </motion.div>

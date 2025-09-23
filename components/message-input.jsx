@@ -1,14 +1,24 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { StopIcon } from "./icons";
+import { Microphone } from "./microphone";
+import { useRef, useImperativeHandle, forwardRef } from "react";
 
-export function MessageInput({ input, setInput, handleSubmit, isLoading, stop }) {
+export const MessageInput = forwardRef(function MessageInput({ input, setInput, handleSubmit, isLoading, stop, handleTranscription }, ref) {
+    const textareaRef = useRef(null);
+
+    useImperativeHandle(ref, () => ({
+        focus: () => {
+            textareaRef.current?.focus();
+        }
+    }));
     return (
         <div className="flex-shrink-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="flex justify-center p-4 pb-4">
                 <form onSubmit={handleSubmit} className="flex flex-row gap-2 relative items-end w-full max-w-lg">
                     <div className="relative flex-1 min-h-[44px] p-2 rounded-xl border-2 border-input bg-[#171717] dark:bg-[#171717] focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/20 transition-colors flex flex-col">
                         <Textarea
+                            ref={textareaRef}
                             value={input}
                             onChange={e => setInput(e.target.value)}
                             onKeyDown={(event) => {
@@ -24,6 +34,8 @@ export function MessageInput({ input, setInput, handleSubmit, isLoading, stop })
                             rows={1}
                         />
                         <div className="flex gap-2 justify-end items-center mt-2 flex-shrink-0">
+
+                            <Microphone onTranscription={handleTranscription} />
 
                             <Button
                                 type="button"
@@ -50,6 +62,7 @@ export function MessageInput({ input, setInput, handleSubmit, isLoading, stop })
                                     type="submit"
                                     size="icon"
                                     className="h-8 w-8 rounded-full cursor-pointer"
+                                    disabled={!input.trim()}
                                 >
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                                         <path d="M7 11L12 6L17 11M12 18V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -62,4 +75,4 @@ export function MessageInput({ input, setInput, handleSubmit, isLoading, stop })
             </div>
         </div>
     );
-}
+});

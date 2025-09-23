@@ -5,15 +5,12 @@ import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { Loader } from "./ai-elements/loader";
 import { Weather } from "./tool-components/weather";
+import { GeneratedImage } from "./tool-components/generatedImage";
 
-export function ChatMessages({ messages, isLoading }) {
+export function ChatMessages({ messages, isLoading, handleTranscription, handleLogoGenerate }) {
     const messagesEndRef = useRef(null);
     const containerRef = useRef(null);
 
-    // Determine if we should add padding:
-    // - Add padding if last message is from user
-    // - Keep padding while AI is responding (isLoading = true)
-    // - Only remove padding when AI has finished AND last message is from assistant
     const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
     const shouldAddPadding = lastMessage?.role === "user" || isLoading;
 
@@ -28,9 +25,6 @@ export function ChatMessages({ messages, isLoading }) {
 
 
     useEffect(() => {
-        // Only scroll when:
-        // 1. User sends a message (new message added and not loading)
-        // 2. AI finishes responding (was loading, now not loading)
         if (messages.length > 0) {
             const lastMessage = messages[messages.length - 1];
 
@@ -61,7 +55,7 @@ export function ChatMessages({ messages, isLoading }) {
     return (
         <div ref={containerRef} className="flex-1 overflow-y-auto">
             <div className={`flex flex-col gap-4 items-center p-4 ${shouldAddPadding ? '' : ''}`}>
-                {messages.map(({ role, parts, id }, index) => (
+                {messages.map(({ role, parts, id }) => (
                     <motion.div
                         key={id}
                         className={`flex flex-row gap-4 px-4 py-1 w-full md:w-[500px] md:px-0 first-of-type:pt-2`}
@@ -87,13 +81,35 @@ export function ChatMessages({ messages, isLoading }) {
                                 console.log(part)
                                 if (part.type === "text") {
                                     return (
-                                        <div
-                                            key={index}
-                                            className="text-zinc-800 dark:text-zinc-300 flex flex-col gap-4"
-                                        >
+                                        <div key={index} className="text-zinc-800 dark:text-zinc-300 flex flex-col gap-4">
                                             <Markdown>{part.text}</Markdown>
                                         </div>
                                     )
+                                }
+                                else if (part.type === 'tool-generateLogo') {
+                                    // Display generated logo
+                                    if (part.output && part.output.success && part.output.imageUrl) {
+                                        return (
+                                            <div key={index}>
+                                                <GeneratedImage imageUrl={part.output.imageUrl} />
+                                            </div>
+                                        )
+                                    } else if (part.output && !part.output.success) {
+                                        return (
+                                            <div key={index} className="text-red-500">
+                                                Failed to generate logo: {part.output.error}
+                                            </div>
+                                        )
+                                    } else {
+                                        return (
+                                            <div key={index} className="flex flex-row gap-2 items-center">
+                                                <Loader />
+                                                <div className="text-zinc-500 italic">
+                                                    Generating logo for {part.input?.businessName || 'your business'}...
+                                                </div>
+                                            </div>
+                                        )
+                                    }
                                 }
                                 else if (part.type === 'tool-displayWeather') {
                                     // Only render if output is available
@@ -106,8 +122,11 @@ export function ChatMessages({ messages, isLoading }) {
                                     }
                                     // Show loading state while waiting for output
                                     return (
-                                        <div key={index} className="text-zinc-500 italic">
-                                            Getting weather for {part.input?.location || 'location'}...
+                                        <div key={index} className="flex flex-row gap-2 items-center">
+                                            <Loader />
+                                            <div className="text-zinc-500 italic">
+                                                Getting weather for {part.input?.location || 'location'}...
+                                            </div>
                                         </div>
                                     )
                                 }
