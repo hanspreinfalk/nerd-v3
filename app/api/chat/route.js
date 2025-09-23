@@ -25,7 +25,8 @@ export async function POST(request) {
     const { messages } = await request.json();
 
     const result = streamText({
-        model: openrouter('x-ai/grok-4-fast:free'),
+        // model: openrouter('x-ai/grok-4-fast:free'),
+        model: openrouter('google/gemini-2.5-flash'),
         system: `
             - keep your responses limited to a sentence.
             - DO NOT output lists.

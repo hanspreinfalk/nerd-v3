@@ -3,6 +3,7 @@ import { UserIcon } from "@/components/icons";
 import { Markdown } from "@/components/markdown";
 import Image from "next/image";
 import { useEffect, useRef } from "react";
+import { Loader } from "./ai-elements/loader";
 
 export function ChatMessages({ messages, isLoading }) {
     const messagesEndRef = useRef(null);
@@ -59,7 +60,7 @@ export function ChatMessages({ messages, isLoading }) {
     return (
         <div ref={containerRef} className="flex-1 overflow-y-auto">
             <div className={`flex flex-col gap-4 items-center p-4 ${shouldAddPadding ? '' : ''}`}>
-                {messages.map(({ role, parts, id, toolInvocations }) => (
+                {messages.map(({ role, parts, id }, index) => (
                     <motion.div
                         key={id}
                         className={`flex flex-row gap-4 px-4 py-1 w-full md:w-[500px] md:px-0 first-of-type:pt-2`}
@@ -74,28 +75,33 @@ export function ChatMessages({ messages, isLoading }) {
                             )}
                         </div>
 
-                        <div className="flex flex-col gap-2 w-full">
-                            {parts.map((part, index) => (
-                                part.type === "text" && (
-                                    <div
-                                        key={index}
-                                        className="text-zinc-800 dark:text-zinc-300 flex flex-col gap-4"
-                                    >
-                                        <Markdown>{part.text}</Markdown>
-                                    </div>
-                                )
-                            ))}
+                        {(isLoading && role === "assistant" && index === messages.length - 1) && (
+                            <div key={id}>
+                                <Loader />
+                            </div>
+                        )}
 
-                            {toolInvocations && (
-                                <div>
-                                    {toolInvocations.map((toolInvocation, index) => {
-                                        const { toolName, toolCallId, state } = toolInvocation;
-                                        <div key={index}>
-                                            <Markdown>{toolName}</Markdown>
+                        <div className="flex flex-col gap-2 w-full">
+                            {parts.map((part, index) => {
+                                // console.log(part)
+                                if (part.type === "text") {
+                                    return (
+                                        <div
+                                            key={index}
+                                            className="text-zinc-800 dark:text-zinc-300 flex flex-col gap-4"
+                                        >
+                                            <Markdown>{part.text}</Markdown>
                                         </div>
-                                    })}
-                                </div>
-                            )}
+                                    )
+                                }
+                                // else if (part.type === 'tool-displayWeather') {
+                                //     return (
+                                //         <div key={index}>
+                                //             tool calling 
+                                //         </div>
+                                //     )
+                                // } 
+                            })}
                         </div>
                     </motion.div>
                 ))}

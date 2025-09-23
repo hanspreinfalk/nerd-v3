@@ -31,7 +31,7 @@ export function UserNav() {
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full cursor-pointer">
                     <Avatar className="h-8 w-8">
-                        <AvatarImage src="/avatars/01.png" alt="@username" />
+                        {/* <AvatarImage src="/avatars/01.png" alt="@username" /> */}
                         <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
                             H
                         </AvatarFallback>
@@ -43,7 +43,7 @@ export function UserNav() {
                     <div className="flex flex-col space-y-1">
                         <div className="flex items-center space-x-2">
                             <Avatar className="h-8 w-8">
-                                <AvatarImage src="/avatars/01.png" alt="@username" />
+                                {/* <AvatarImage src="/avatars/01.png" alt="@username" /> */}
                                 <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
                                     H
                                 </AvatarFallback>
