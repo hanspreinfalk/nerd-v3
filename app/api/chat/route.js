@@ -13,7 +13,38 @@ const weatherTool = createTool({
     }),
     execute: async function ({ location }) {
         await new Promise(resolve => setTimeout(resolve, 2000));
-        return { weather: 'Sunny', temperature: 75, location };
+
+        // Random weather conditions
+        const weatherConditions = ['Sunny', 'Cloudy', 'Rainy', 'Partly Cloudy', 'Overcast', 'Snowy', 'Drizzle'];
+        const randomWeather = weatherConditions[Math.floor(Math.random() * weatherConditions.length)];
+
+        // Random temperature between 15-85°F based on weather condition
+        let tempRange;
+        switch (randomWeather) {
+            case 'Sunny':
+                tempRange = [70, 85];
+                break;
+            case 'Snowy':
+                tempRange = [15, 35];
+                break;
+            case 'Rainy':
+            case 'Drizzle':
+                tempRange = [45, 65];
+                break;
+            case 'Cloudy':
+            case 'Overcast':
+                tempRange = [50, 70];
+                break;
+            case 'Partly Cloudy':
+                tempRange = [60, 80];
+                break;
+            default:
+                tempRange = [50, 75];
+        }
+
+        const randomTemp = Math.floor(Math.random() * (tempRange[1] - tempRange[0] + 1)) + tempRange[0];
+
+        return { weather: randomWeather, temperature: randomTemp, location };
     },
 });
 

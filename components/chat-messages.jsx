@@ -4,6 +4,7 @@ import { Markdown } from "@/components/markdown";
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { Loader } from "./ai-elements/loader";
+import { Weather } from "./tool-components/weather";
 
 export function ChatMessages({ messages, isLoading }) {
     const messagesEndRef = useRef(null);
@@ -75,15 +76,15 @@ export function ChatMessages({ messages, isLoading }) {
                             )}
                         </div>
 
-                        {(isLoading && role === "assistant" && index === messages.length - 1) && (
+                        {/* {(isLoading && role === "assistant" && index === messages.length - 1) && (
                             <div key={id}>
                                 <Loader />
                             </div>
-                        )}
+                        )} */}
 
                         <div className="flex flex-col gap-2 w-full">
                             {parts.map((part, index) => {
-                                // console.log(part)
+                                console.log(part)
                                 if (part.type === "text") {
                                     return (
                                         <div
@@ -94,13 +95,22 @@ export function ChatMessages({ messages, isLoading }) {
                                         </div>
                                     )
                                 }
-                                // else if (part.type === 'tool-displayWeather') {
-                                //     return (
-                                //         <div key={index}>
-                                //             tool calling 
-                                //         </div>
-                                //     )
-                                // } 
+                                else if (part.type === 'tool-displayWeather') {
+                                    // Only render if output is available
+                                    if (part.output && part.state === 'output-available') {
+                                        return (
+                                            <div key={index}>
+                                                <Weather weather={part.output.weather} temperature={part.output.temperature} location={part.output.location} />
+                                            </div>
+                                        )
+                                    }
+                                    // Show loading state while waiting for output
+                                    return (
+                                        <div key={index} className="text-zinc-500 italic">
+                                            Getting weather for {part.input?.location || 'location'}...
+                                        </div>
+                                    )
+                                }
                             })}
                         </div>
                     </motion.div>
