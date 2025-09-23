@@ -59,7 +59,7 @@ export function ChatMessages({ messages, isLoading }) {
     return (
         <div ref={containerRef} className="flex-1 overflow-y-auto">
             <div className={`flex flex-col gap-4 items-center p-4 ${shouldAddPadding ? '' : ''}`}>
-                {messages.map(({ role, parts, id }) => (
+                {messages.map(({ role, parts, id, toolInvocations }) => (
                     <motion.div
                         key={id}
                         className={`flex flex-row gap-4 px-4 py-1 w-full md:w-[500px] md:px-0 first-of-type:pt-2`}
@@ -85,6 +85,17 @@ export function ChatMessages({ messages, isLoading }) {
                                     </div>
                                 )
                             ))}
+
+                            {toolInvocations && (
+                                <div>
+                                    {toolInvocations.map((toolInvocation, index) => {
+                                        const { toolName, toolCallId, state } = toolInvocation;
+                                        <div key={index}>
+                                            <Markdown>{toolName}</Markdown>
+                                        </div>
+                                    })}
+                                </div>
+                            )}
                         </div>
                     </motion.div>
                 ))}

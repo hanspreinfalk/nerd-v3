@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { StopIcon } from "./icons";
 
-export function MessageInput({ input, setInput, handleSubmit }) {
+export function MessageInput({ input, setInput, handleSubmit, isLoading, stop }) {
     return (
         <div className="flex-shrink-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="flex justify-center p-4 pb-4">
@@ -23,7 +24,7 @@ export function MessageInput({ input, setInput, handleSubmit }) {
                             rows={1}
                         />
                         <div className="flex gap-2 justify-end items-center mt-2 flex-shrink-0">
-                            {/* File attachment button */}
+
                             <Button
                                 type="button"
                                 size="icon"
@@ -34,16 +35,27 @@ export function MessageInput({ input, setInput, handleSubmit }) {
                                     <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
                             </Button>
-                            {/* Send button */}
-                            <Button
-                                type="submit"
-                                size="icon"
-                                className="h-8 w-8 rounded-full cursor-pointer"
-                            >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                                    <path d="M7 11L12 6L17 11M12 18V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                            </Button>
+
+                            {isLoading ? (
+                                <Button
+                                    type="button"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-full cursor-pointer"
+                                    onClick={stop}
+                                >
+                                    <StopIcon />
+                                </Button>
+                            ) : (
+                                <Button
+                                    type="submit"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-full cursor-pointer"
+                                >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                        <path d="M7 11L12 6L17 11M12 18V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </form>

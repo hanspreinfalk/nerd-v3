@@ -5,14 +5,22 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChatMessages } from './chat-messages';
 import { MessageInput } from './message-input';
+import { lastAssistantMessageIsCompleteWithToolCalls } from 'ai';
 
 export function ChatContainer() {
     const [input, setInput] = useState('');
-    const { messages, sendMessage, isLoading } = useChat();
+    const [isLoading, setIsLoading] = useState(false);
+    const { messages, sendMessage, stop } = useChat({
+        sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+        onFinish: () => {
+            setIsLoading(false);
+        }
+    });
 
     const handleSubmit = (e) => {
         e.preventDefault();
         if (input.trim()) {
+            setIsLoading(true);
             sendMessage({ text: input });
             setInput('');
         }
@@ -54,6 +62,8 @@ export function ChatContainer() {
                                 input={input}
                                 setInput={setInput}
                                 handleSubmit={handleSubmit}
+                                isLoading={isLoading}
+                                stop={stop}
                             />
                         </motion.div>
                     </motion.div>
@@ -81,6 +91,8 @@ export function ChatContainer() {
                                 input={input}
                                 setInput={setInput}
                                 handleSubmit={handleSubmit}
+                                isLoading={isLoading}
+                                stop={stop}
                             />
                         </motion.div>
                     </motion.div>
