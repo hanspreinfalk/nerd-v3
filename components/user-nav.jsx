@@ -29,14 +29,22 @@ export function UserNav() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full cursor-pointer">
+                {/* <Button variant="ghost" className="relative h-8 w-8 rounded-full cursor-pointer">
                     <Avatar className="h-8 w-8">
-                        {/* <AvatarImage src="/avatars/01.png" alt="@username" /> */}
+                        <AvatarImage src="/avatars/01.png" alt="@username" />
                         <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
                             H
                         </AvatarFallback>
                     </Avatar>
-                </Button>
+                </Button> */}
+                <div className="flex flex-row gap-2">
+                    <Button variant="ghost" className="cursor-pointer">
+                        Login
+                    </Button>
+                    <Button variant="default" className="cursor-pointer">
+                        Register
+                    </Button>
+                </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-64" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">

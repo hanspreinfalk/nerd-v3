@@ -54,7 +54,7 @@ export function ChatMessages({ messages, isLoading, handleTranscription, handleL
 
     return (
         <div ref={containerRef} className="flex-1 overflow-y-auto">
-            <div className={`flex flex-col gap-4 items-center p-4 ${shouldAddPadding ? '' : ''}`}>
+            <div className={`flex flex-col gap-4 items-center p-4 ${shouldAddPadding ? 'pb-[10vh]' : 'pb-[10vh]'}`}>
                 {messages.map(({ role, parts, id }) => (
                     <motion.div
                         key={id}
@@ -62,23 +62,19 @@ export function ChatMessages({ messages, isLoading, handleTranscription, handleL
                         initial={{ y: 5, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                     >
-                        <div className="size-[24px] border rounded-sm p-1 flex flex-col justify-center items-center shrink-0 text-zinc-500">
-                            {role === "assistant" ? (
-                                <Image src="/lentes.svg" alt="logo" width={24} height={24} />
-                            ) : (
+                        {role === 'user' && (
+                            <div className="size-[24px] border rounded-sm p-1 flex flex-col justify-center items-center shrink-0 text-zinc-500">
                                 <UserIcon />
-                            )}
-                        </div>
-
-                        {/* {(isLoading && role === "assistant" && index === messages.length - 1) && (
-                            <div key={id}>
-                                <Loader />
                             </div>
-                        )} */}
+                        )}
+
+                        {role === 'assistant' && (
+                            <Image src="/lentes.svg" alt="logo" width={24} height={24} />
+                        )}
 
                         <div className="flex flex-col gap-2 w-full">
                             {parts.map((part, index) => {
-                                console.log(part)
+                                //console.log(part)
                                 if (part.type === "text") {
                                     return (
                                         <div key={index} className="text-zinc-800 dark:text-zinc-300 flex flex-col gap-4">
@@ -113,7 +109,7 @@ export function ChatMessages({ messages, isLoading, handleTranscription, handleL
                                 }
                                 else if (part.type === 'tool-displayWeather') {
                                     // Only render if output is available
-                                    if (part.output && part.state === 'output-available') {
+                                    if (part.output && part.state && part.state === 'output-available') {
                                         return (
                                             <div key={index}>
                                                 <Weather weather={part.output.weather} temperature={part.output.temperature} location={part.output.location} />
