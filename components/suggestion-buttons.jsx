@@ -6,7 +6,7 @@ export function SuggestionButtons({ suggestions, onSuggestionClick }) {
     }
 
     return (
-        <div className="flex flex-wrap gap-2 mt-3">
+        <div className="flex flex-wrap gap-2">
             {suggestions.map((suggestion, index) => (
                 <Button
                     key={index}

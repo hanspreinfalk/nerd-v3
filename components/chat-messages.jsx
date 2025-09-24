@@ -7,24 +7,37 @@ import { Loader } from "./ai-elements/loader";
 import { Weather } from "./tool-components/weather";
 import { GeneratedImage } from "./tool-components/generatedImage";
 import { SuggestionButtons } from "./suggestion-buttons";
+import { Microphone } from "./microphone";
+import { ActivateMicrophone } from "./activate-microphone";
 
 export function ChatMessages({ messages, isLoading, handleTranscription, onSuggestionClick }) {
     const messagesEndRef = useRef(null);
     const containerRef = useRef(null);
 
-    // Function to parse suggestions from text
+    // Function to parse suggestions and microphone commands from text
     const parseSuggestions = (text) => {
         const suggestionRegex = /Suggestions:\s*\[([^\]]+)\]/i;
-        const match = text.match(suggestionRegex);
+        const microphoneRegex = /StartMicrophone/i;
 
-        if (match) {
-            const suggestionsText = match[1];
-            const suggestions = suggestionsText.split(';').map(s => s.trim());
-            const cleanedText = text.replace(suggestionRegex, '').trim();
-            return { suggestions, cleanedText };
+        const suggestionMatch = text.match(suggestionRegex);
+        const microphoneMatch = text.match(microphoneRegex);
+
+        let suggestions = [];
+        let showMicrophone = false;
+        let cleanedText = text;
+
+        if (suggestionMatch) {
+            const suggestionsText = suggestionMatch[1];
+            suggestions = suggestionsText.split(';').map(s => s.trim());
+            cleanedText = cleanedText.replace(suggestionRegex, '').trim();
         }
 
-        return { suggestions: [], cleanedText: text };
+        if (microphoneMatch) {
+            showMicrophone = true;
+            cleanedText = cleanedText.replace(microphoneRegex, '').trim();
+        }
+
+        return { suggestions, showMicrophone, cleanedText };
     };
 
     const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
@@ -87,9 +100,9 @@ export function ChatMessages({ messages, isLoading, handleTranscription, onSugge
                             {parts.map((part, index) => {
                                 //console.log(part)
                                 if (part.type === "text") {
-                                    const { suggestions, cleanedText } = parseSuggestions(part.text);
+                                    const { suggestions, showMicrophone, cleanedText } = parseSuggestions(part.text);
                                     return (
-                                        <div key={index} className="text-zinc-800 dark:text-zinc-300 flex flex-col gap-2">
+                                        <div key={index} className="text-zinc-800 dark:text-zinc-300 flex flex-col gap-4">
                                             <div className="flex flex-row gap-4 items-center">
                                                 {role === 'assistant' && (
                                                     <Image src="/lentes.svg" alt="logo" width={24} height={24} />
@@ -102,6 +115,9 @@ export function ChatMessages({ messages, isLoading, handleTranscription, onSugge
                                                         suggestions={suggestions}
                                                         onSuggestionClick={onSuggestionClick}
                                                     />
+                                                )}
+                                                {showMicrophone && handleTranscription && messageIndex === messages.length - 1 && (
+                                                    <ActivateMicrophone onTranscription={handleTranscription} />
                                                 )}
                                             </div>
                                         </div>
