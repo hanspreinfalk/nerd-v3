@@ -6,10 +6,26 @@ import { useEffect, useRef } from "react";
 import { Loader } from "./ai-elements/loader";
 import { Weather } from "./tool-components/weather";
 import { GeneratedImage } from "./tool-components/generatedImage";
+import { SuggestionButtons } from "./suggestion-buttons";
 
-export function ChatMessages({ messages, isLoading, handleTranscription, handleLogoGenerate }) {
+export function ChatMessages({ messages, isLoading, handleTranscription, onSuggestionClick }) {
     const messagesEndRef = useRef(null);
     const containerRef = useRef(null);
+
+    // Function to parse suggestions from text
+    const parseSuggestions = (text) => {
+        const suggestionRegex = /Suggestions:\s*\[([^\]]+)\]/i;
+        const match = text.match(suggestionRegex);
+
+        if (match) {
+            const suggestionsText = match[1];
+            const suggestions = suggestionsText.split(';').map(s => s.trim());
+            const cleanedText = text.replace(suggestionRegex, '').trim();
+            return { suggestions, cleanedText };
+        }
+
+        return { suggestions: [], cleanedText: text };
+    };
 
     const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
     const shouldAddPadding = lastMessage?.role === "user" || isLoading;
@@ -22,7 +38,6 @@ export function ChatMessages({ messages, isLoading, handleTranscription, handleL
             });
         }
     };
-
 
     useEffect(() => {
         if (messages.length > 0) {
@@ -54,8 +69,8 @@ export function ChatMessages({ messages, isLoading, handleTranscription, handleL
 
     return (
         <div ref={containerRef} className="flex-1 overflow-y-auto">
-            <div className={`flex flex-col gap-4 items-center p-4 ${shouldAddPadding ? 'pb-[10vh]' : 'pb-[10vh]'}`}>
-                {messages.map(({ role, parts, id }) => (
+            <div className={`flex flex-col gap-4 items-center p-4 ${shouldAddPadding ? 'pb-[15vh]' : 'pb-[15vh]'}`}>
+                {messages.map(({ role, parts, id }, messageIndex) => (
                     <motion.div
                         key={id}
                         className={`flex flex-row gap-4 px-4 py-1 w-full md:w-[500px] md:px-0 first-of-type:pt-2`}
@@ -68,17 +83,27 @@ export function ChatMessages({ messages, isLoading, handleTranscription, handleL
                             </div>
                         )}
 
-                        {role === 'assistant' && (
-                            <Image src="/lentes.svg" alt="logo" width={24} height={24} />
-                        )}
-
                         <div className="flex flex-col gap-2 w-full">
                             {parts.map((part, index) => {
                                 //console.log(part)
                                 if (part.type === "text") {
+                                    const { suggestions, cleanedText } = parseSuggestions(part.text);
                                     return (
-                                        <div key={index} className="text-zinc-800 dark:text-zinc-300 flex flex-col gap-4">
-                                            <Markdown>{part.text}</Markdown>
+                                        <div key={index} className="text-zinc-800 dark:text-zinc-300 flex flex-col gap-2">
+                                            <div className="flex flex-row gap-4 items-center">
+                                                {role === 'assistant' && (
+                                                    <Image src="/lentes.svg" alt="logo" width={24} height={24} />
+                                                )}
+                                                {cleanedText && <Markdown>{cleanedText}</Markdown>}
+                                            </div>
+                                            <div className="pl-10">
+                                                {suggestions.length > 0 && onSuggestionClick && messageIndex === messages.length - 1 && (
+                                                    <SuggestionButtons
+                                                        suggestions={suggestions}
+                                                        onSuggestionClick={onSuggestionClick}
+                                                    />
+                                                )}
+                                            </div>
                                         </div>
                                     )
                                 }
@@ -86,22 +111,33 @@ export function ChatMessages({ messages, isLoading, handleTranscription, handleL
                                     // Display generated logo
                                     if (part.output && part.output.success && part.output.imageUrl) {
                                         return (
-                                            <div key={index}>
+                                            <div key={index} className="flex flex-row gap-4 items-center pb-4">
+                                                {role === 'assistant' && (
+                                                    <Image src="/lentes.svg" alt="logo" width={24} height={24} />
+                                                )}
                                                 <GeneratedImage imageUrl={part.output.imageUrl} />
                                             </div>
                                         )
                                     } else if (part.output && !part.output.success) {
                                         return (
-                                            <div key={index} className="text-red-500">
-                                                Failed to generate logo: {part.output.error}
+                                            <div key={index} className="flex flex-row gap-4 items-center">
+                                                {role === 'assistant' && (
+                                                    <Image src="/lentes.svg" alt="logo" width={24} height={24} />
+                                                )}
+                                                <p className="text-red-500">Failed to generate logo: {part.output.error}</p>
                                             </div>
                                         )
                                     } else {
                                         return (
-                                            <div key={index} className="flex flex-row gap-2 items-center">
-                                                <Loader />
-                                                <div className="text-zinc-500 italic">
-                                                    Generating logo for {part.input?.businessName || 'your business'}...
+                                            <div key={index} className="flex flex-row gap-4 items-center">
+                                                {role === 'assistant' && (
+                                                    <Image src="/lentes.svg" alt="logo" width={24} height={24} />
+                                                )}
+                                                <div className="flex flex-row gap-2 items-center">
+                                                    <Loader />
+                                                    <div className="text-zinc-500 italic">
+                                                        Generating logo for {part.input?.businessName || 'your business'}...
+                                                    </div>
                                                 </div>
                                             </div>
                                         )
@@ -118,10 +154,15 @@ export function ChatMessages({ messages, isLoading, handleTranscription, handleL
                                     }
                                     // Show loading state while waiting for output
                                     return (
-                                        <div key={index} className="flex flex-row gap-2 items-center">
-                                            <Loader />
-                                            <div className="text-zinc-500 italic">
-                                                Getting weather for {part.input?.location || 'location'}...
+                                        <div key={index} className="flex flex-row gap-4 items-center">
+                                            {role === 'assistant' && (
+                                                <Image src="/lentes.svg" alt="logo" width={24} height={24} />
+                                            )}
+                                            <div className="flex flex-row gap-2 items-center">
+                                                <Loader />
+                                                <div className="text-zinc-500 italic">
+                                                    Getting weather for {part.input?.location || 'location'}...
+                                                </div>
                                             </div>
                                         </div>
                                     )

@@ -30,14 +30,12 @@ export function ChatContainer() {
 
     const handleTranscription = (transcript) => {
         setInput(transcript);
-    };
+    }
 
-    const handleLogoGenerate = async (businessName, businessType, businessDescription) => {
+    const handleSuggestionClick = (suggestion) => {
         setIsLoading(true);
-        await sendMessage({
-            text: `Please generate a logo for my business: ${businessName}, which is a ${businessType}. ${businessDescription}`
-        });
-    };
+        sendMessage({ text: suggestion });
+    }
 
     return (
         <div className="flex flex-col h-[calc(100dvh-4rem)] bg-background">
@@ -97,7 +95,7 @@ export function ChatContainer() {
                             messages={messages}
                             isLoading={isLoading}
                             handleTranscription={handleTranscription}
-                            handleLogoGenerate={handleLogoGenerate}
+                            onSuggestionClick={handleSuggestionClick}
                         />
                         <motion.div
                             initial={{ y: 100, opacity: 0 }}
