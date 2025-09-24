@@ -4,13 +4,11 @@ import { Markdown } from "@/components/markdown";
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { Loader } from "./ai-elements/loader";
-import { GeneratedImage } from "./tool-components/generatedImage";
 import { SuggestionButtons } from "./suggestion-buttons";
 import { ActivateMicrophone } from "./activate-microphone";
-import { AddProducts } from "./add-products";
 import { Summary } from "./tool-components/summary";
 
-export function ChatMessages({ messages, isLoading, handleTranscription, onSuggestionClick, onProductSubmit }) {
+export function ChatMessages({ messages, isLoading, handleTranscription, onSuggestionClick }) {
     const messagesEndRef = useRef(null);
     const containerRef = useRef(null);
 
@@ -18,15 +16,12 @@ export function ChatMessages({ messages, isLoading, handleTranscription, onSugge
     const parseSuggestions = (text) => {
         const suggestionRegex = /Suggestions:\s*\[([^\]]+)\]/i;
         const microphoneRegex = /StartMicrophone/i;
-        const addProductsRegex = /AddProducts/i;
 
         const suggestionMatch = text.match(suggestionRegex);
         const microphoneMatch = text.match(microphoneRegex);
-        const addProductsMatch = text.match(addProductsRegex);
 
         let suggestions = [];
         let showMicrophone = false;
-        let showAddProducts = false;
         let cleanedText = text;
 
         if (suggestionMatch) {
@@ -40,12 +35,7 @@ export function ChatMessages({ messages, isLoading, handleTranscription, onSugge
             cleanedText = cleanedText.replace(microphoneRegex, '').trim();
         }
 
-        if (addProductsMatch) {
-            showAddProducts = true;
-            cleanedText = cleanedText.replace(addProductsRegex, '').trim();
-        }
-
-        return { suggestions, showMicrophone, showAddProducts, cleanedText };
+        return { suggestions, showMicrophone, cleanedText };
     };
 
     const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
@@ -102,11 +92,7 @@ export function ChatMessages({ messages, isLoading, handleTranscription, onSugge
                             {parts.map((part, index) => {
                                 //console.log(part)
                                 if (part.type === "text") {
-                                    const { suggestions, showMicrophone, showAddProducts, cleanedText } = parseSuggestions(part.text);
-
-                                    if (cleanedText.includes("PRODUCTS:")) {
-                                        return null;
-                                    }
+                                    const { suggestions, showMicrophone, cleanedText } = parseSuggestions(part.text);
 
                                     return (
                                         <div key={index} className="text-zinc-800 dark:text-zinc-300 flex flex-col gap-4">
@@ -137,52 +123,9 @@ export function ChatMessages({ messages, isLoading, handleTranscription, onSugge
                                                 {showMicrophone && handleTranscription && messageIndex === messages.length - 1 && (
                                                     <ActivateMicrophone onTranscription={handleTranscription} />
                                                 )}
-                                                {showAddProducts && (
-                                                    <AddProducts
-                                                        onProductSubmit={onProductSubmit}
-                                                        scrollToBottom={scrollToBottom}
-                                                        isLastMessage={messageIndex === messages.length - 1}
-                                                    />
-                                                )}
                                             </div>
                                         </div>
                                     )
-                                }
-                                else if (part.type === 'tool-generateLogo') {
-                                    // Display generated logo
-                                    if (part.output && part.output.success && part.output.imageUrl) {
-                                        return (
-                                            <div key={index} className="flex flex-row gap-4 items-center pb-4">
-                                                {role === 'assistant' && (
-                                                    <Image src="/lentes.svg" alt="logo" width={24} height={24} />
-                                                )}
-                                                <GeneratedImage imageUrl={part.output.imageUrl} />
-                                            </div>
-                                        )
-                                    } else if (part.output && !part.output.success) {
-                                        return (
-                                            <div key={index} className="flex flex-row gap-4 items-center">
-                                                {role === 'assistant' && (
-                                                    <Image src="/lentes.svg" alt="logo" width={24} height={24} />
-                                                )}
-                                                <p className="text-red-500">Failed to generate logo: {part.output.error}</p>
-                                            </div>
-                                        )
-                                    } else {
-                                        return (
-                                            <div key={index} className="flex flex-row gap-4 items-center">
-                                                {role === 'assistant' && (
-                                                    <Image src="/lentes.svg" alt="logo" width={24} height={24} />
-                                                )}
-                                                <div className="flex flex-row gap-2 items-center">
-                                                    <Loader />
-                                                    <div className="text-zinc-500 italic">
-                                                        Generating logo for {part.input?.businessName || 'your business'}...
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )
-                                    }
                                 }
                                 else if (part.type === 'tool-getSummary') {
                                     // Only render if output is available
@@ -192,14 +135,8 @@ export function ChatMessages({ messages, isLoading, handleTranscription, onSugge
                                                 <Summary 
                                                     name={part.input?.name}
                                                     description={part.input?.description}
-                                                    location={part.input?.location}
                                                     hexColors={part.input?.hexColors}
                                                     style={part.input?.style}
-                                                    hours={part.input?.hours}
-                                                    email={part.input?.email}
-                                                    phone={part.input?.phone}
-                                                    uniqueSellingProposition={part.input?.uniqueSellingProposition}
-                                                    products={part.input?.products}
                                                 />
                                             </div>
                                         )
@@ -213,7 +150,7 @@ export function ChatMessages({ messages, isLoading, handleTranscription, onSugge
                                             <div className="flex flex-row gap-2 items-center">
                                                 <Loader />
                                                 <div className="text-zinc-500 italic">
-                                                    Getting summary for {part.input?.name || 'business'}...
+                                                    Getting summary for {part.input?.name || 'to do list'}...
                                                 </div>
                                             </div>
                                         </div>

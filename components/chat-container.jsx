@@ -96,7 +96,6 @@ export function ChatContainer() {
                             isLoading={isLoading}
                             handleTranscription={handleTranscription}
                             onSuggestionClick={handleSuggestionClick}
-                            onProductSubmit={sendMessage}
                         />
                         <motion.div
                             initial={{ y: 100, opacity: 0 }}
