@@ -59,7 +59,7 @@ export function ChatContainer() {
                                 transition: { duration: 0.2, ease: "easeInOut" }
                             }}
                         >
-                            What do you want to create?
+                            Ready to build?
                         </motion.p>
                         <motion.div
                             className="w-full"
@@ -96,6 +96,7 @@ export function ChatContainer() {
                             isLoading={isLoading}
                             handleTranscription={handleTranscription}
                             onSuggestionClick={handleSuggestionClick}
+                            onProductSubmit={sendMessage}
                         />
                         <motion.div
                             initial={{ y: 100, opacity: 0 }}

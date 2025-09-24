@@ -4,26 +4,29 @@ import { Markdown } from "@/components/markdown";
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { Loader } from "./ai-elements/loader";
-import { Weather } from "./tool-components/weather";
 import { GeneratedImage } from "./tool-components/generatedImage";
 import { SuggestionButtons } from "./suggestion-buttons";
-import { Microphone } from "./microphone";
 import { ActivateMicrophone } from "./activate-microphone";
+import { AddProducts } from "./add-products";
+import { Summary } from "./tool-components/summary";
 
-export function ChatMessages({ messages, isLoading, handleTranscription, onSuggestionClick }) {
+export function ChatMessages({ messages, isLoading, handleTranscription, onSuggestionClick, onProductSubmit }) {
     const messagesEndRef = useRef(null);
     const containerRef = useRef(null);
 
-    // Function to parse suggestions and microphone commands from text
+    // Function to parse suggestions, microphone, and add products commands from text
     const parseSuggestions = (text) => {
         const suggestionRegex = /Suggestions:\s*\[([^\]]+)\]/i;
         const microphoneRegex = /StartMicrophone/i;
+        const addProductsRegex = /AddProducts/i;
 
         const suggestionMatch = text.match(suggestionRegex);
         const microphoneMatch = text.match(microphoneRegex);
+        const addProductsMatch = text.match(addProductsRegex);
 
         let suggestions = [];
         let showMicrophone = false;
+        let showAddProducts = false;
         let cleanedText = text;
 
         if (suggestionMatch) {
@@ -37,7 +40,12 @@ export function ChatMessages({ messages, isLoading, handleTranscription, onSugge
             cleanedText = cleanedText.replace(microphoneRegex, '').trim();
         }
 
-        return { suggestions, showMicrophone, cleanedText };
+        if (addProductsMatch) {
+            showAddProducts = true;
+            cleanedText = cleanedText.replace(addProductsRegex, '').trim();
+        }
+
+        return { suggestions, showMicrophone, showAddProducts, cleanedText };
     };
 
     const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
@@ -82,7 +90,7 @@ export function ChatMessages({ messages, isLoading, handleTranscription, onSugge
 
     return (
         <div ref={containerRef} className="flex-1 overflow-y-auto">
-            <div className={`flex flex-col gap-4 items-center p-4 ${shouldAddPadding ? 'pb-[15vh]' : 'pb-[15vh]'}`}>
+            <div className={`flex flex-col gap-4 items-center p-4 ${shouldAddPadding ? 'pb-[5vh]' : 'pb-[5vh]'}`}>
                 {messages.map(({ role, parts, id }, messageIndex) => (
                     <motion.div
                         key={id}
@@ -90,26 +98,36 @@ export function ChatMessages({ messages, isLoading, handleTranscription, onSugge
                         initial={{ y: 5, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                     >
-                        {role === 'user' && (
-                            <div className="size-[24px] border rounded-sm p-1 flex flex-col justify-center items-center shrink-0 text-zinc-500">
-                                <UserIcon />
-                            </div>
-                        )}
-
                         <div className="flex flex-col gap-2 w-full">
                             {parts.map((part, index) => {
                                 //console.log(part)
                                 if (part.type === "text") {
-                                    const { suggestions, showMicrophone, cleanedText } = parseSuggestions(part.text);
+                                    const { suggestions, showMicrophone, showAddProducts, cleanedText } = parseSuggestions(part.text);
+
+                                    if (cleanedText.includes("PRODUCTS:")) {
+                                        return null;
+                                    }
+
                                     return (
                                         <div key={index} className="text-zinc-800 dark:text-zinc-300 flex flex-col gap-4">
-                                            <div className="flex flex-row gap-4 items-center">
+                                            <div className="flex flex-row gap-3 items-start">
                                                 {role === 'assistant' && (
-                                                    <Image src="/lentes.svg" alt="logo" width={24} height={24} />
+                                                    <div className="shrink-0 mt-2">
+                                                        <Image src="/lentes.svg" alt="logo" width={24} height={24} />
+                                                    </div>
                                                 )}
-                                                {cleanedText && <Markdown>{cleanedText}</Markdown>}
+                                                {role === 'user' && (
+                                                    <div className="size-[24px] border rounded-sm p-1 flex flex-col justify-center items-center shrink-0 text-zinc-500">
+                                                        <UserIcon />
+                                                    </div>
+                                                )}
+                                                <div className="flex-1 min-w-0">
+                                                    {cleanedText && <Markdown>{cleanedText}</Markdown>}
+                                                </div>
                                             </div>
-                                            <div className="pl-10">
+
+                                            {/* Actions section - aligned with message content */}
+                                            <div className="ml-9"> {/* ml-9 = gap-3 + icon width (24px) */}
                                                 {suggestions.length > 0 && onSuggestionClick && messageIndex === messages.length - 1 && (
                                                     <SuggestionButtons
                                                         suggestions={suggestions}
@@ -118,6 +136,13 @@ export function ChatMessages({ messages, isLoading, handleTranscription, onSugge
                                                 )}
                                                 {showMicrophone && handleTranscription && messageIndex === messages.length - 1 && (
                                                     <ActivateMicrophone onTranscription={handleTranscription} />
+                                                )}
+                                                {showAddProducts && (
+                                                    <AddProducts
+                                                        onProductSubmit={onProductSubmit}
+                                                        scrollToBottom={scrollToBottom}
+                                                        isLastMessage={messageIndex === messages.length - 1}
+                                                    />
                                                 )}
                                             </div>
                                         </div>
@@ -159,12 +184,23 @@ export function ChatMessages({ messages, isLoading, handleTranscription, onSugge
                                         )
                                     }
                                 }
-                                else if (part.type === 'tool-displayWeather') {
+                                else if (part.type === 'tool-getSummary') {
                                     // Only render if output is available
                                     if (part.output && part.state && part.state === 'output-available') {
                                         return (
-                                            <div key={index}>
-                                                <Weather weather={part.output.weather} temperature={part.output.temperature} location={part.output.location} />
+                                            <div key={index} className="pb-4">
+                                                <Summary 
+                                                    name={part.input?.name}
+                                                    description={part.input?.description}
+                                                    location={part.input?.location}
+                                                    hexColors={part.input?.hexColors}
+                                                    style={part.input?.style}
+                                                    hours={part.input?.hours}
+                                                    email={part.input?.email}
+                                                    phone={part.input?.phone}
+                                                    uniqueSellingProposition={part.input?.uniqueSellingProposition}
+                                                    products={part.input?.products}
+                                                />
                                             </div>
                                         )
                                     }
@@ -177,7 +213,7 @@ export function ChatMessages({ messages, isLoading, handleTranscription, onSugge
                                             <div className="flex flex-row gap-2 items-center">
                                                 <Loader />
                                                 <div className="text-zinc-500 italic">
-                                                    Getting weather for {part.input?.location || 'location'}...
+                                                    Getting summary for {part.input?.name || 'business'}...
                                                 </div>
                                             </div>
                                         </div>

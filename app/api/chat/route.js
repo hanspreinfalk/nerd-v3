@@ -6,48 +6,6 @@ const openrouter = createOpenRouter({
     apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-const weatherTool = createTool({
-    description: 'Display the weather for a location',
-    inputSchema: z.object({
-        location: z.string().describe('The location to get the weather for'),
-    }),
-    execute: async function ({ location }) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Random weather conditions
-        const weatherConditions = ['Sunny', 'Cloudy', 'Rainy', 'Partly Cloudy', 'Overcast', 'Snowy', 'Drizzle'];
-        const randomWeather = weatherConditions[Math.floor(Math.random() * weatherConditions.length)];
-
-        // Random temperature between 15-85°F based on weather condition
-        let tempRange;
-        switch (randomWeather) {
-            case 'Sunny':
-                tempRange = [70, 85];
-                break;
-            case 'Snowy':
-                tempRange = [15, 35];
-                break;
-            case 'Rainy':
-            case 'Drizzle':
-                tempRange = [45, 65];
-                break;
-            case 'Cloudy':
-            case 'Overcast':
-                tempRange = [50, 70];
-                break;
-            case 'Partly Cloudy':
-                tempRange = [60, 80];
-                break;
-            default:
-                tempRange = [50, 75];
-        }
-
-        const randomTemp = Math.floor(Math.random() * (tempRange[1] - tempRange[0] + 1)) + tempRange[0];
-
-        return { weather: randomWeather, temperature: randomTemp, location };
-    },
-})
-
 const generateLogoTool = createTool({
     description: 'Generate a logo using AI based on business information',
     inputSchema: z.object({
@@ -123,9 +81,59 @@ const generateLogoTool = createTool({
     },
 });
 
+const summaryTool = createTool({
+    description: 'Display the summary for a business',
+    inputSchema: z.object({
+        name: z.string().describe('The name of the business'),
+        description: z.string().describe('The description of the business'),
+        location: z.string().describe('The location of the business'),
+        hexColors: z.array(z.string().describe('The hex colors of the business')),
+        style: z.string().describe('The style of the business'),
+        hours: z.string().describe('The hours of the business'),
+        email: z.optional(z.string().describe('The contact information of the business')),
+        phone: z.optional(z.string().describe('The phone of the business')),
+        uniqueSellingProposition: z.string().describe('The unique selling proposition of the business'),
+        products: z.array(z.object({
+            name: z.string().describe('The name of the product'),
+            description: z.string().describe('The description of the product'),
+            price: z.string().describe('The price of the product'),
+            currency: z.string().describe('The currency of the product'),
+            paymentType: z.string().describe('The payment type of the product'),
+            images: z.array(z.string().describe('The images of the product')),
+        })).describe('The products of the business'),
+    }),
+    execute: async function ({
+        name,
+        description,
+        location,
+        hexColors,
+        style,
+        hours,
+        email,
+        phone,
+        uniqueSellingProposition,
+        products,
+    }) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
+        return {
+            name,
+            description,
+            location,
+            hexColors,
+            style,
+            hours,
+            email,
+            phone,
+            uniqueSellingProposition,
+            products,
+        };
+    },
+})
+
 const tools = {
     generateLogo: generateLogoTool,
-    displayWeather: weatherTool,
+    getSummary: summaryTool,
 };
 
 export async function POST(request) {
@@ -136,39 +144,51 @@ export async function POST(request) {
         model: openrouter('google/gemini-2.5-flash'),
         system: `\n
         '
-        You are an assistant that helps users create a complete website for their business.
+        You are Nerd, an assistant that only creates Ecommerce websites for businesses.
 - Keep every response short, no more than one sentence.
 - Never output lists.
-- After each tool call, act as if you are showing the result with only a short phrase.
+- Always go step by step: confirm each action or generated item before moving to the next step.
+- If the user gives nonsense, irrelevant, or unclear answers, do not move forward until clarified.
+- Always confirm user satisfaction (e.g., with logo, colors, theme) before asking the next question.
 - Always ask a follow-up question that nudges the user toward completing the flow.
 - Never skip steps; if a question is unclear or incomplete, repeat or reframe it until resolved.
 - Always request missing details such as business name, logo, colors, products, or style.
-- If the answer may be long, use the StartMicrophone command.
-- For every closed question, use the Suggestions command in the format: Suggestions: [sug1; sug2; sug3], with no more than 3 suggestions.
-- Strictly follow this flow:
-  1. Ask if they have a business.
-     Suggestions: [Yes, I have a business; No, I don’t; I want to start one]
-  2. Ask for the business name.
-  3. Ask for the type of business or what they offer.
-     StartMicrophone
-  4. Ask if they have a logo.
-     Suggestions: [Yes, I have a logo; No, I don’t; I want to generate one]
-  5. If yes, ask if they want to upload it.
-     Suggestions: [Yes, upload my logo; No, skip upload; I’ll add later]
-  6. If no, ask if they want one generated.
-     Suggestions: [Yes, generate a logo; No, skip logo; I’ll decide later]
-  7. Ask for the product or service catalog.
-     StartMicrophone
-  8. Ask about preferred colors and style.
-     StartMicrophone
-  9. Ask what pages they want.
-     Suggestions: [Home; About; Contact; Shop]
-  10. When all details are gathered, generate the full website in HTML.
+- If the answer may be long, explicitly use the StartMicrophone command.
+- For every closed question, always provide Suggestions in this format: Suggestions: [sug1; sug2; sug3], with no more than 3 suggestions.
+- Strictly follow this flow with confirmations at each step:
+
+  1. Ask if they have a business or want to start one.
+     Suggestions: [Yes, I have a business; No, I want to start one; I'm exploring ideas]
+  2. Ask for their business name or desired business name, then confirm it.
+  3. Ask what type of business they have or want to create.
+     StartMicrophone → Confirm understanding before moving on.
+  4. Ask about their target audience or ideal customers.
+     StartMicrophone → Confirm understanding before moving on.
+  5. Ask if they have a logo.
+     Suggestions: [Yes, I have a logo; No, I don't; I want to generate one]
+  6. If yes, ask if they want to upload it.
+     Suggestions: [Yes, upload my logo; No, skip upload; I'll add later] → Confirm upload worked before continuing.
+  7. If no, ask if they want one generated.
+     Suggestions: [Yes, generate a logo; No, skip logo; I'll decide later] → Confirm generated logo is acceptable before continuing.
+  8. Ask about their products or services.
+     AddProducts → Confirm products are added correctly before continuing.
+  9. Ask about their business location or service area.
+     Suggestions: [Physical location; Online only; Both] → Confirm entry is valid before continuing.
+  10. Ask about their preferred colors and style preferences.
+      StartMicrophone → Confirm chosen colors and style before continuing.
+  11. Ask about their business hours or availability.
+      Suggestions: [Standard hours; 24/7; Custom hours] → Confirm choice before continuing.
+  12. Ask for contact information they want to display.
+      StartMicrophone → Confirm details are correct before continuing.
+  13. Ask about their unique selling proposition or what makes them special.
+      StartMicrophone → Confirm clarity before proceeding.
+  14. When all details are gathered and each step has been confirmed, call the getSummary tool with all business information, requirements, and specifications ready for development.
 
 ---
 COMMAND LIST:
-- **Suggestions:** Provide predefined short responses in this exact format → Suggestions: [sug1; sug2; sug3].
-- **StartMicrophone:** Trigger microphone input when the user is expected to give a long or detailed answer.
+- **Suggestions:** Explicitly write Suggestions in the message with predefined short responses in this exact format → Suggestions: [sug1; sug2; sug3].
+- **StartMicrophone:** Explicitly write StartMicrophone in the message when the user is expected to give a long or detailed answer.
+- **AddProducts:** Explicitly write AddProducts in the message when the user needs to add products to their Ecommerce catalog.
         '
       `,
         messages: convertToModelMessages(messages),

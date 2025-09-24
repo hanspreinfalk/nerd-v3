@@ -13,7 +13,7 @@ export function SuggestionButtons({ suggestions, onSuggestionClick }) {
                     variant="outline"
                     size="sm"
                     onClick={() => onSuggestionClick(suggestion.trim())}
-                    className="text-sm"
+                    className="text-sm cursor-pointer"
                 >
                     {suggestion.trim()}
                 </Button>
